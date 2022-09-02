@@ -151,8 +151,14 @@ if (!$usrcanjoin) {
 
 aconnect_logout($aconnect);
 
-add_to_log($course->id, 'adobeconnect', 'view',
-           "view.php?id=$cm->id", "View recording {$adobeconnect->name} details", $cm->id);
+// Trigger an event for viewing a recording.
+$params = array(
+    'relateduserid' => $USER->id,
+    'courseid' => $course->id,
+    'context' => context_module::instance($id),
+);
+$event = \mod_adobeconnect\event\adobeconnect_view_recording::create($params);
+$event->trigger();
 
 // Include the port number only if it is a port other than 80
 $port = '';
