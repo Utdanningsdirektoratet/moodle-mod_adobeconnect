@@ -222,4 +222,25 @@ public function set_new_user_password($username, $password){
 
         $this->create_request($params, false);
     }
+
+    /* *
+    * This function sets the teacher to the host group
+    * @param string $groupId id of the hostgroup
+    * @param string $principalId id of the teacher
+    */
+    public function setTeacherAsHost($groupId, $principalId) {
+        $https = $this->get_https();
+        if($https){
+            $url = 'https://'.$this->get_serverurl();
+        }
+        else{
+            $url = 'http://'.$this->get_serverurl();
+        }
+
+        $baseUrl = "{$url}?action=group-membership-update&group-id={$groupId}&principal-id={$principalId}&is-member=true&session={$this->_cookie}";
+
+        curl_setopt($this->_curlconnection, CURLOPT_URL, $baseUrl);
+        curl_setopt($this->_curlconnection, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($this->_curlconnection);
+    }
 }
