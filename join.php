@@ -54,7 +54,7 @@ $usrobj = new stdClass();
 $usrobj = clone($USER);
 if (isset($CFG->adobeconnect_email_login) and
 !empty($CFG->adobeconnect_email_login)) {
-  $usrobj->username = $usrobj->email;
+  $usrobj->username = obfuscatedEmail($usrobj->email, $usrobj->id);
 }
 
 $usrobj->password = aconnect_create_user_password($usrobj->email);
@@ -151,7 +151,7 @@ if ($usrcanjoin and confirm_sesskey($sesskey)) {
                 $aconnect = new connect_class_dom($CFG->adobeconnect_host, $CFG->adobeconnect_port, $CFG->adobeconnect_admin_login, $CFG->adobeconnect_admin_password, '', $https, $CFG->adobeconnect_timeout);
                 
                 $aconnect->request_user_login($CFG->adobeconnect_admin_login, $CFG->adobeconnect_admin_password);
-                $aconnect->setTeacherAsHost($CFG->adobeconnect_hostgroupid, $usrprincipal);
+                $aconnect->changeRole($CFG->adobeconnect_hostgroupid, $usrprincipal);
             } else {
                 //DEBUG
                 print_object('error assign user adobe host role');

@@ -1683,3 +1683,16 @@ function aconnect_update_time_last_visited($acroom_id) {
 
     $DB->update_record("adobeconnect", $toupdate);
 }
+
+/**
+ * Strips users email for domainname (school/county address), adds Moodle-id to end of email (to ensure no duplicates), and returns the new email with a fictitious email.
+ *
+ * @param string $email
+ * @return string
+ */
+function obfuscatedEmail($email, $id) {
+    $split_email = strstr($email, '@', true);
+    $mailWithId = $split_email . '.' . $id;
+    $newEmail = $mailWithId . "@digilaer.no";
+    return $newEmail;
+}

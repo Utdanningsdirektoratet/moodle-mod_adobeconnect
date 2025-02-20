@@ -207,18 +207,18 @@ if (!empty($meetscoids)) {
 
     unset($names);
 
+    // This is commented out as it creates duplicate users in Adobe Connect
+//     // Check if the user exists and if not create the new user
+//     if (!($usrprincipal = aconnect_user_exists($aconnect, $usrobj))) {
+//         if (!($usrprincipal = aconnect_create_user($aconnect, $usrobj))) {
+//             // DEBUG
+//             debugging("error creating user", DEBUG_DEVELOPER);
 
-    // Check if the user exists and if not create the new user
-    if (!($usrprincipal = aconnect_user_exists($aconnect, $usrobj))) {
-        if (!($usrprincipal = aconnect_create_user($aconnect, $usrobj))) {
-            // DEBUG
-            debugging("error creating user", DEBUG_DEVELOPER);
-
-//            print_object("error creating user");
-//            print_object($aconnect->_xmlresponse);
-            $validuser = false;
-        }
-    }
+// //            print_object("error creating user");
+// //            print_object($aconnect->_xmlresponse);
+//             $validuser = false;
+//         }
+//     }
 
     // Check the user's capability and assign them view permissions to the recordings folder
     // if it's a public meeting give them permissions regardless
