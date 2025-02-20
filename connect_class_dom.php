@@ -224,11 +224,11 @@ public function set_new_user_password($username, $password){
     }
 
     /* *
-    * This function sets the teacher to the host group
+    * This function changes role of a user
     * @param string $groupId id of the hostgroup
     * @param string $principalId id of the teacher
     */
-    public function setTeacherAsHost($groupId, $principalId) {
+    public function changeRole($groupId, $principalId) {
         $https = $this->get_https();
         if($https){
             $url = 'https://'.$this->get_serverurl();
