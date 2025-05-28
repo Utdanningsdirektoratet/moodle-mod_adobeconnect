@@ -1491,6 +1491,12 @@ function aconnect_create_user_password($inputString) {
   global $CFG, $USER, $DB;
   $key=$CFG->adobeconnectkey;
   $cryptor = new Cryptor('aes-256-ctr', 'sha256', Cryptor::FORMAT_B64);
+  
+  $params = (object)[
+    'acuser' => null,
+    'password' => null,
+    'userset' => null,
+  ];
 
   //$user_table = $DB->get_record('user',array('id'=> $USER->id));
   if($pwuser = $DB->get_record('acusers',array('acuser'=> $inputString))){
@@ -1554,6 +1560,10 @@ function generate_seed(){
  * */
 function init_password_reset(){
 	global $USER, $CFG;
+
+    $usrdata = (object)[
+        'username' => null
+    ];
 
 	$password = generate_seed();
 	$acuser = $USER->username;
