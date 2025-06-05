@@ -266,7 +266,7 @@ class mod_adobeconnect_renderer extends plugin_renderer_base {
             if (!empty($recordinggrp)) {
                 foreach($recordinggrp as $recording_scoid => $recording) {
 
-                    if ($recording->sourcesco != $sourcescoid) {
+                    if ($recording["sourcesco"] != $sourcescoid) {
                         continue;
                     }
 
@@ -278,7 +278,7 @@ class mod_adobeconnect_renderer extends plugin_renderer_base {
                            '&groupid='. $groupid . '&sesskey=' . $USER->sesskey;
 
                     $param = array('target' => '_blank');
-                    $name = html_entity_decode($recording->name);
+                    $name = html_entity_decode($recording["name"]);
 					$html .= "<a href='$url' target='_blank'>";
 					$pixlink = $CFG->wwwroot.'/mod/adobeconnect/pix/recording.svg';
 					$html .= "<img width=30px src='$pixlink' alt='play' title='play'/>";
