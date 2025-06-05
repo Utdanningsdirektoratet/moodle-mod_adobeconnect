@@ -97,7 +97,7 @@ $usrobj = clone($USER);
 //============ START Auto-Login ===================>
 if (isset($CFG->adobeconnect_email_login) and
 !empty($CFG->adobeconnect_email_login)) {
-$usrobj->username = $usrobj->email;
+$usrobj->username = obfuscatedEmail($usrobj->email, $usrobj->id);
 }
 $usrobj->password = aconnect_create_user_password($usrobj->email);
 if ( $usrobj->username == $CFG->adobeconnect_admin_login ) {
