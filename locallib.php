@@ -620,7 +620,7 @@ function aconnect_return_all_templates($xml) {
 
      $aconnect->create_request($params);
 
-     $recordings = array();
+     $recordings = [];
 
      if ($aconnect->call_success()) {
          $dom = new DomDocument();
@@ -658,39 +658,39 @@ function aconnect_return_all_templates($xml) {
                                      $value = (!is_null($meetingdetail->getElementsByTagName('name'))) ?
                                               $meetingdetail->getElementsByTagName('name')->item(0)->nodeValue : '';
 
-                                     $recordings[$j]->name = (string) $value;
+                                     $recordings[$j]["name"] = (string) $value;
 
                                      $value = (!is_null($meetingdetail->getElementsByTagName('url-path'))) ?
                                               $meetingdetail->getElementsByTagName('url-path')->item(0)->nodeValue : '';
 
-                                     $recordings[$j]->url = (string) $value;
+                                     $recordings[$j]["url"] = (string) $value;
 
                                      $value = (!is_null($meetingdetail->getElementsByTagName('date-begin'))) ?
                                               $meetingdetail->getElementsByTagName('date-begin')->item(0)->nodeValue : '';
 
-                                     $recordings[$j]->startdate = (string) $value;
+                                     $recordings[$j]["startdate"] = (string) $value;
 
                                      $value = (!is_null($meetingdetail->getElementsByTagName('date-end'))) ?
                                               $meetingdetail->getElementsByTagName('date-end')->item(0)->nodeValue : '';
 
-                                     $recordings[$j]->enddate = (string) $value;
+                                     $recordings[$j]["enddate"] = (string) $value;
 
                                      $value = (!is_null($meetingdetail->getElementsByTagName('date-created'))) ?
                                               $meetingdetail->getElementsByTagName('date-created')->item(0)->nodeValue : '';
 
-                                     $recordings[$j]->createdate = (string) $value;
+                                     $recordings[$j]["createdate"] = (string) $value;
 
                                      $value = (!is_null($meetingdetail->getElementsByTagName('date-modified'))) ?
                                               $meetingdetail->getElementsByTagName('date-modified')->item(0)->nodeValue : '';
 
-                                     $recordings[$j]->modified = (string) $value;
+                                     $recordings[$j]["modified"] = (string) $value;
 
                                      $value = (!is_null($recordingvac9) ?
                                               $recordingvac9->nodeValue : $recordingvac8->nodeValue);
 
-                                     $recordings[$j]->duration = (string) $value;
+                                     $recordings[$j]["duration"] = (string) $value;
 
-                                     $recordings[$j]->sourcesco = (int) $sourcescoid;
+                                     $recordings[$j]["sourcesco"] = (int) $sourcescoid;
                                  }
 
                              }
