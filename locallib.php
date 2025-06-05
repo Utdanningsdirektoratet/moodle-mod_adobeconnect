@@ -1091,7 +1091,7 @@ function aconnect_create_user($aconnect, $usrdata) {
 	'type' => 'user',
 	'send-email' => 'false',
 	'has-children' => 0,
-	'email' => $usrdata->email,
+	'email' => obfuscatedEmail($usrdata->email, $usrdata->id),
 	);
     $aconnect->create_request($params);
 
