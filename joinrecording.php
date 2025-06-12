@@ -189,12 +189,11 @@ $test=check_if_user_logged_in($aconnect);
 //============ END Auto-Login ===================|
 $adobesession = $aconnect->get_cookie();
 
-$redirlink = $protocol.$CFG->adobeconnect_meethost.$port.$meeting->url."?session=".$aconnect->get_cookie();
+$redirlink = $protocol.$CFG->adobeconnect_meethost.$port.$meeting['url']."?session=".$aconnect->get_cookie();
 
 if(!$test){
 	echo "<script type='text/javascript'>alert('".get_string('couldnoterror','mod_adobeconnect')."');window.location='$redirlink';</script>";
 	exit;
 }
 
-redirect($protocol . $CFG->adobeconnect_meethost . $port
-                     . $recording->url . '?session=' . $aconnect->get_cookie());
+redirect($protocol . $CFG->adobeconnect_meethost . $port . $recording['url'] . '?session=' . $aconnect->get_cookie());
