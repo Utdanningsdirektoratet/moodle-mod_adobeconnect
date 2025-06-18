@@ -199,8 +199,14 @@ if ($ADMIN->fulltree) {
                        }
                        //============ END Auto-Login ===================|
 
-
-
+    $settings->add(new admin_setting_configtext(
+        'adobeconnect/adobeconnect_obfuscated_email',
+        get_string('admin_obfuscated_email', 'adobeconnect'),
+        get_string('admin_obfuscated_email_desc', 'adobeconnect'),
+        'digilaer.no',
+        PARAM_TEXT
+    ));
+                    
     $settings->add(new admin_setting_configtext('adobeconnect_admin_httpauth', get_string('admin_httpauth', 'adobeconnect'),
                        get_string('admin_httpauth_desc', 'adobeconnect'), 'my-user-id', PARAM_TEXT));
 

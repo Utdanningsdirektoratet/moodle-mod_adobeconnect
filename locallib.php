@@ -1703,6 +1703,7 @@ function aconnect_update_time_last_visited($acroom_id) {
 function obfuscatedEmail($email, $id) {
     $split_email = strstr($email, '@', true);
     $mailWithId = $split_email . '.' . $id;
-    $newEmail = $mailWithId . "@digilaer.no";
+    $settingsmail =  get_config('adobeconnect', 'adobeconnect_obfuscated_email');;
+    $newEmail = $mailWithId . "@" . $settingsmail;
     return $newEmail;
 }

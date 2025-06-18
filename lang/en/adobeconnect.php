@@ -187,5 +187,5 @@ $string['nocapability'] = "You don't have the permission to do this!";
 $string['invalidid'] = "The context you specified is invalid!";
 $string['exposetoall'] = "Allow everyone to set password";
 $string['exposetoall_desc'] = "This will provide link to the set adobeconnect password page to every user! If unchecked only the users that have the permission to see/assign roles like presenter and host will be able to set their password manually!";
-
-
+$string['admin_obfuscated_email'] = 'Obfuscated email';
+$string['admin_obfuscated_email_desc'] = 'The $settingsmail value used in the obfuscatedEmail-function.';
