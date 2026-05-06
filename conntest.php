@@ -29,6 +29,12 @@ require_login(SITEID, false);
 
 global $USER, $CFG, $DB, $OUTPUT;
 
+// Adobeconnect Admin settings
+$settings_ac_host =  get_config('adobeconnect', 'adobeconnect_host');
+$settings_ac_port =  get_config('adobeconnect', 'adobeconnect_port');
+$settings_ac_admin_login =  get_config('adobeconnect', 'adobeconnect_admin_login');
+$settings_ac_admin_password =  get_config('adobeconnect', 'adobeconnect_admin_password');
+
 $checkifempty = true; // Check for uninitialized variable
 
 $url = new moodle_url('/mod/adobeconnect/conntest.php');
@@ -42,17 +48,11 @@ if (false === array_search($USER->id, $admins)) {
 
 $ac = new stdClass();
 
-$param = array('name' => 'adobeconnect_admin_login');
-$ac->login      = $DB->get_field('config', 'value', $param);
+$ac->login = $settings_ac_admin_login;
+$ac->pass = $settings_ac_admin_password;
+$ac->host = $settings_ac_host;
+$ac->port = $settings_ac_port;
 
-$param = array('name' => 'adobeconnect_host');
-$ac->host       = $DB->get_field('config', 'value', $param);
-
-$param = array('name' => 'adobeconnect_port');
-$ac->port       = $DB->get_field('config', 'value', $param);
-
-$param = array('name' => 'adobeconnect_admin_password');
-$ac->pass       = $DB->get_field('config', 'value', $param);
 
 $param = array('name' => 'adobeconnect_admin_httpauth');
 $ac->httpauth   = $DB->get_field('config', 'value', $param);

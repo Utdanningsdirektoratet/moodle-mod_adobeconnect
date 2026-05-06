@@ -51,34 +51,72 @@ function xmldb_adobeconnect_upgrade($oldversion=0) {
             $rs->close();
         }
 
-    /// adobeconnect savepoint reached
+        /// adobeconnect savepoint reached
         upgrade_mod_savepoint(true, 2010120800, 'adobeconnect');
     }
 
     if ($oldversion < 2011041400) {
 
-        // Changing precision of field meeturl on table adobeconnect to (60)
-        $table = new xmldb_table('adobeconnect');
-        $field = new xmldb_field('meeturl', XMLDB_TYPE_CHAR, '60', null, null, null, null, 'templatescoid');
+      // Changing precision of field meeturl on table adobeconnect to (60)
+      $table = new xmldb_table('adobeconnect');
+      $field = new xmldb_field('meeturl', XMLDB_TYPE_CHAR, '60', null, null, null, null, 'templatescoid');
 
-        // Launch change of precision for field meeturl
-        $dbman->change_field_precision($table, $field);
+      // Launch change of precision for field meeturl
+      $dbman->change_field_precision($table, $field);
 
-        // adobeconnect savepoint reached
-        upgrade_mod_savepoint(true, 2011041400, 'adobeconnect');
+      // adobeconnect savepoint reached
+      upgrade_mod_savepoint(true, 2011041400, 'adobeconnect');
     }
-    
+
     if ($oldversion < 2012012250) {
+      $table = new xmldb_table('adobeconnect');
+      $field = new xmldb_field('userid', XMLDB_TYPE_INTEGER, '10', true, true, null, 0, 'introformat');
+
+      if (!$dbman->field_exists($table, $field)) {
+        $dbman->add_field($table, $field);
+      }
+
+      // adobeconnect savepoint reached
+      upgrade_mod_savepoint(true, 2012012500, 'adobeconnect');
+
+    }
+    if ($oldversion < 2015123101){
+
+      $table = new xmldb_table('acusers');
+      $table->add_field('id', XMLDB_TYPE_INTEGER, '11', true, true, XMLDB_SEQUENCE, null, null);
+      $table->add_field('password', XMLDB_TYPE_CHAR, '191', true, true, null, null, 'id');
+      $table->add_field('acuser', XMLDB_TYPE_CHAR, '191', true, true, null, null, 'password');
+      $table->add_field('userset', XMLDB_TYPE_INTEGER, '11', true, false, false, '0', 'acuser');
+      $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'), null, null); 
+      $table->add_key('unique', XMLDB_KEY_UNIQUE, array('acuser'), null, null); 
+
+
+      if (!$dbman->table_exists($table)){
+        $dbman->create_table($table);
+      }
+
+      upgrade_mod_savepoint(true, 2015123101, 'adobeconnect');
+    }
+    if ($oldversion < 2020122202) {
+      $table = new xmldb_table('acusers');
+      $field = new xmldb_field('passwordold', XMLDB_TYPE_CHAR, '191', true, true, null, null, 'password');
+
+      if (!$dbman->field_exists($table, $field)) {
+        $dbman->add_field($table, $field);
+      }
+
+      // adobeconnect savepoint reached
+      upgrade_mod_savepoint(true, 2020122202, 'adobeconnect');
+
+    }
+
+    if ($oldversion < 2022031801) {
         $table = new xmldb_table('adobeconnect');
-        $field = new xmldb_field('userid', XMLDB_TYPE_INTEGER, '10', true, true, null, 0, 'introformat');
-    
+        $field = new xmldb_field('timelastvisited', XMLDB_TYPE_INTEGER, '11', true, true, null, '0', 'timemodified');
+
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-    
-        // adobeconnect savepoint reached
-        upgrade_mod_savepoint(true, 2012012500, 'adobeconnect');
-
     }
 
     return true;

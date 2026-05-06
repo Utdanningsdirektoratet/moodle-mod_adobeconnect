@@ -28,8 +28,8 @@ class connect_class_dom extends connect_class {
 
     public function __construct($serverurl = '', $serverport = '',
                                 $username = '', $password = '',
-                                $cookie = '', $https) {
-        parent::__construct($serverurl, $serverport, $username, $password, $cookie, $https);
+                                $cookie = '', $https = false, $timeout = 0) {
+        parent::__construct($serverurl, $serverport, $username, $password, $cookie, $https, $timeout);
 
     }
 
@@ -47,7 +47,7 @@ class connect_class_dom extends connect_class {
 
         foreach($params as $key => $data) {
 
-            $datahtmlent = htmlentities($data, ENT_COMPAT, 'UTF-8');
+            $datahtmlent = htmlentities($data ?? '', ENT_COMPAT, 'UTF-8');
             $child = $dom->createElement('param', $datahtmlent);
             $root->appendChild($child);
 
@@ -166,12 +166,80 @@ class connect_class_dom extends connect_class {
 
         return $this->_xmlresponse;
     }
+	/* * 
+	 * Rewriten function to work with adobeconnect enchanced security
+	 * Will log in the user set and after login get a new cookie and set the object cookie variable to 
+	 * the new cookie which will be used in subsequent calls
+	 * @param string $username username/email of the account
+	 * @param string $password password of the account to be logged in
+	 * @return string session cookie
+	 * */
+public function request_user_login($username,$password) {
+	$https = $this->get_https();
+	if($https){
+		$url = 'https://'.$this->get_serverurl();
+	}
+	else{
+		$url = 'http://'.$this->get_serverurl();
+	}
+	$call = $url."?action=login&login=".urlencode(trim($username))."&password=".urlencode(trim($password));
 
+  $ch = $this->_curlconnection;  
+  curl_setopt($ch, CURLOPT_URL, $call);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);  
+	curl_setopt($ch, CURLOPT_HEADER, 1);  
+	$response = curl_exec($ch);  
+
+	$breeze_session_first_strip = strstr($response, 'BREEZESESSION');  
+	$breeze_session_second_strip = strstr($breeze_session_first_strip, ';', true);  
+	$breeze_session = str_replace('BREEZESESSION=', '', $breeze_session_second_strip);  
+	$this->_cookie = $breeze_session;
+
+	return $breeze_session;
+}
+/* *
+ * This function sets the password of the specified user to a new one
+ * @param int $username id of the user in question (principal_id)
+ * @param password the new password to be set for the user
+ */
+public function set_new_user_password($username, $password){
+	$params = array(
+		'action' => 'user-update-pwd',
+		'user-id' => $username,
+		'password' => $password,
+		'password-verify' => $password
+	);
+
+	$this->create_request($params, true);
+	return;
+}
    private function create_http_head_login_xml() {
         $params = array('action' => 'login',
                         'external-auth' => 'use',
                         );
 
         $this->create_request($params, false);
+    }
+
+    /* *
+    * This function changes role of a user
+    * @param string $groupId id of the hostgroup
+    * @param string $principalId id of the teacher
+    */
+    public function changeRole($groupId, $principalId) {
+        $https = $this->get_https();
+        if($https){
+            $url = 'https://'.$this->get_serverurl();
+        }
+        else{
+            $url = 'http://'.$this->get_serverurl();
+        }
+
+        $baseUrl = "{$url}?action=group-membership-update&group-id={$groupId}&principal-id={$principalId}&is-member=true&session={$this->_cookie}";
+
+        curl_setopt($this->_curlconnection, CURLOPT_URL, $baseUrl);
+        curl_setopt($this->_curlconnection, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($this->_curlconnection);
     }
 }

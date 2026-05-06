@@ -31,6 +31,13 @@ $id = optional_param('id', 0, PARAM_INT); // course_module ID, or
 $a  = optional_param('a', 0, PARAM_INT);  // adobeconnect instance ID
 $groupid = optional_param('group', 0, PARAM_INT);
 
+// Adobeconnect Admin settings
+$settings_ac_host =  get_config('adobeconnect', 'adobeconnect_host');
+$settings_ac_meethost =  get_config('adobeconnect', 'adobeconnect_meethost');
+$settings_ac_port =  get_config('adobeconnect', 'adobeconnect_port');
+$settings_ac_admin_login =  get_config('adobeconnect', 'adobeconnect_admin_login');
+$settings_ac_admin_password =  get_config('adobeconnect', 'adobeconnect_admin_password');
+
 global $CFG, $USER, $DB, $PAGE, $OUTPUT, $SESSION;
 
 if ($id) {
@@ -94,7 +101,17 @@ if (($formdata = data_submitted($CFG->wwwroot . '/mod/adobeconnect/view.php')) &
 $usrobj = new stdClass();
 $usrobj = clone($USER);
 
-$usrobj->username = set_username($usrobj->username, $usrobj->email);
+//============ START Auto-Login ===================>
+if (isset($CFG->adobeconnect_email_login) and !empty($CFG->adobeconnect_email_login)) {
+  $usrobj->username = obfuscatedEmail($usrobj->email, $usrobj->id);
+}
+$usrobj->password = aconnect_create_user_password($usrobj->email);
+if ( $usrobj->username == $settings_ac_admin_login ) {
+  $usrobj->password = $settings_ac_admin_password;
+} 
+//============ ENDE Auto-Login ===================|
+
+
 
 /// Print the page header
 $url = new moodle_url('/mod/adobeconnect/view.php', array('id' => $cm->id));
@@ -117,10 +134,12 @@ $sql = "SELECT meetingscoid ".
 $meetscoids = $DB->get_records_sql($sql, $params);
 $recording = array();
 
+$aconnect = false;
+
 if (!empty($meetscoids)) {
     $recscoids = array();
 
-    $aconnect = aconnect_login();
+    if(empty($aconnect)) $aconnect = aconnect_login();
 
     // Get the forced recordings folder sco-id
     // Get recordings that are based off of the meeting
@@ -194,18 +213,18 @@ if (!empty($meetscoids)) {
 
     unset($names);
 
+    // This is commented out as it creates duplicate users in Adobe Connect
+//     // Check if the user exists and if not create the new user
+//     if (!($usrprincipal = aconnect_user_exists($aconnect, $usrobj))) {
+//         if (!($usrprincipal = aconnect_create_user($aconnect, $usrobj))) {
+//             // DEBUG
+//             debugging("error creating user", DEBUG_DEVELOPER);
 
-    // Check if the user exists and if not create the new user
-    if (!($usrprincipal = aconnect_user_exists($aconnect, $usrobj))) {
-        if (!($usrprincipal = aconnect_create_user($aconnect, $usrobj))) {
-            // DEBUG
-            debugging("error creating user", DEBUG_DEVELOPER);
-
-//            print_object("error creating user");
-//            print_object($aconnect->_xmlresponse);
-            $validuser = false;
-        }
-    }
+// //            print_object("error creating user");
+// //            print_object($aconnect->_xmlresponse);
+//             $validuser = false;
+//         }
+//     }
 
     // Check the user's capability and assign them view permissions to the recordings folder
     // if it's a public meeting give them permissions regardless
@@ -229,11 +248,11 @@ if (!empty($meetscoids)) {
         aconnect_assign_user_perm($aconnect, $usrprincipal, $fldid, ADOBE_VIEW_ROLE);
     }
 
-    aconnect_logout($aconnect);
+    //aconnect_logout($aconnect);
 }
 
 // Log in the current user
-$login = $usrobj->username;
+/*$login = $usrobj->username;
 $password  = $usrobj->username;
 $https = false;
 
@@ -241,10 +260,32 @@ if (isset($CFG->adobeconnect_https) and (!empty($CFG->adobeconnect_https))) {
     $https = true;
 }
 
-$aconnect = new connect_class_dom($CFG->adobeconnect_host, $CFG->adobeconnect_port,
+$aconnect = new connect_class_dom($settings_ac_host, $settings_ac_port,
                                   '', '', '', $https);
 
-$aconnect->request_http_header_login(1, $login);
+$aconnect->request_http_header_login(1, $login);*/
+//============ START Auto-Login ===================>
+// Log in the current user
+$login = $usrobj->username;
+$password = $usrobj->password;
+if ( $login == $settings_ac_admin_login ) {
+  $password = $settings_ac_admin_password;
+}
+$https = false;
+
+if (isset($CFG->adobeconnect_https) and (!empty($CFG->adobeconnect_https))) {
+$https = true;
+}
+
+if(!$aconnect) {
+  $aconnect = new connect_class_dom($settings_ac_host, $settings_ac_port, '', '', '', $https,$CFG->adobeconnect_timeout);
+  if ( $CFG->adobeconnect_login_type == 'httpauth' ) {
+    $aconnect->request_http_header_login(1, $login);
+  } else {
+    $aconnect->request_user_login($login, $password);
+  }
+}
+//============ ENDE Auto-Login ===================|
 $adobesession = $aconnect->get_cookie();
 
 // The batch of code below handles the display of Moodle groups
@@ -292,7 +333,7 @@ if ($cm->groupmode) {
 }
 
 
-$aconnect = aconnect_login();
+if(!$aconnect) $aconnect = aconnect_login();
 
 // Get the Meeting details
 $cond = array('instanceid' => $adobeconnect->id, 'groupid' => $groupid);
@@ -329,7 +370,6 @@ if (($meeting = aconnect_meeting_exists($aconnect, $meetfldscoid, $filter))) {
     }
 }
 
-aconnect_logout($aconnect);
 
 $sesskey = !empty($usrobj->sesskey) ? $usrobj->sesskey : '';
 
@@ -345,8 +385,8 @@ if (has_capability('mod/adobeconnect:meetingpresenter', $context) or
     // Include the port number only if it is a port other than 80
     $port = '';
 
-    if (!empty($CFG->adobeconnect_port) and (80 != $CFG->adobeconnect_port)) {
-        $port = ':' . $CFG->adobeconnect_port;
+    if (!empty($settings_ac_port) and (80 != $settings_ac_port)) {
+        $port = ':' . $settings_ac_port;
     }
 
     $protocol = 'http://';
@@ -355,14 +395,12 @@ if (has_capability('mod/adobeconnect:meetingpresenter', $context) or
         $protocol = 'https://';
     }
 
-    $url = $protocol . $CFG->adobeconnect_meethost . $port
-           . $meeting->url;
+    $url = $protocol . $settings_ac_meethost . $port . $meeting->url;
 
     $meetingdetail->url = $url;
 
 
-    $url = $protocol.$CFG->adobeconnect_meethost.$port.'/admin/meeting/sco/info?principal-id='.
-           $usrprincipal.'&amp;sco-id='.$scoid.'&amp;session='.$adobesession;
+    $url = $protocol.$settings_ac_meethost.$port.'/admin/meeting/sco/info?principal-id='. $usrprincipal.'&amp;sco-id='.$scoid.'&amp;session='.$adobesession;
 
     // Get the server meeting details link
     $meetingdetail->servermeetinginfo = $url;
@@ -375,8 +413,7 @@ if (has_capability('mod/adobeconnect:meetingpresenter', $context) or
 // Determine if the user has the permissions to assign perticipants
 $meetingdetail->participants = false;
 
-if (has_capability('mod/adobeconnect:meetingpresenter', $context, $usrobj->id) or
-    has_capability('mod/adobeconnect:meetinghost', $context, $usrobj->id)){
+if (has_capability('mod/adobeconnect:meetinghost', $context, $usrobj->id)){
 
     $meetingdetail->participants = true;
 }
@@ -394,7 +431,7 @@ $meetingdetail->endtime = $time;
 $meetingdetail->intro = $adobeconnect->intro;
 $meetingdetail->introformat = $adobeconnect->introformat;
 
-echo $OUTPUT->box_start('generalbox', 'meetingsummary');
+//echo $OUTPUT->box_start('generalbox', 'meetingsummary');
 
 // If groups mode is enabled for the activity and the user belongs to a group
 if (NOGROUPS != $cm->groupmode && 0 != $groupid) {
@@ -410,7 +447,7 @@ if (NOGROUPS != $cm->groupmode && 0 != $groupid) {
     echo $renderer->display_no_groups_message();
 }
 
-echo $OUTPUT->box_end();
+//echo $OUTPUT->box_end();
 
 echo '<br />';
 
@@ -420,7 +457,9 @@ if (!$adobeconnect->meetingpublic) {
 
     // Check capabilities
     if (has_capability('mod/adobeconnect:meetingpresenter', $context, $usrobj->id) or
-        has_capability('mod/adobeconnect:meetingparticipant', $context, $usrobj->id)) {
+        has_capability('mod/adobeconnect:meetingparticipant', $context, $usrobj->id) 
+        //added Vesna
+        or has_capability('mod/adobeconnect:meetinghost', $context, $usrobj->id)) {
         $showrecordings = true;
     }
 } else {
@@ -458,6 +497,8 @@ $params = array(
 
 $event = \mod_adobeconnect\event\adobeconnect_view::create($params);
 $event->trigger();
+
+if(!empty($aconnect)) aconnect_logout($aconnect);
 
 /// Finish the page
 echo $OUTPUT->footer();

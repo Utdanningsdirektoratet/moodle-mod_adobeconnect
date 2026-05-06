@@ -37,7 +37,7 @@ class backup_adobeconnect_activity_structure_step extends backup_activity_struct
 
         // Define each element separated
         $adobeconnect = new backup_nested_element('adobeconnect', array('id'), array(
-                'name', 'intro', 'introformat', 'templatescoid',
+                'name', 'intro', 'introformat', 'userid', 'templatescoid',
                 'meeturl', 'starttime', 'endtime', 'meetingpublic',
                 'timecreated', 'timemodified'));
 

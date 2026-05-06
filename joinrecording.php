@@ -19,12 +19,22 @@
  * @author     Akinsaya Delamarre (adelamarre@remote-learner.net)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @copyright  (C) 2015 Remote Learner.net Inc http://www.remote-learner.net
+ * 
+ * The purpose of this file is to add a log entry when the user views a
+ * recording
  */
 
 require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
 require_once(dirname(__FILE__).'/locallib.php');
 require_once(dirname(__FILE__).'/connect_class.php');
 require_once(dirname(__FILE__).'/connect_class_dom.php');
+
+// Adobeconnect Admin settings
+$settings_ac_host =  get_config('adobeconnect', 'adobeconnect_host');
+$settings_ac_meethost =  get_config('adobeconnect', 'adobeconnect_meethost');
+$settings_ac_port =  get_config('adobeconnect', 'adobeconnect_port');
+$settings_ac_admin_login =  get_config('adobeconnect', 'adobeconnect_admin_login');
+$settings_ac_admin_password =  get_config('adobeconnect', 'adobeconnect_admin_password');
 
 $id         = required_param('id', PARAM_INT);
 $groupid    = required_param('groupid', PARAM_INT);
@@ -34,16 +44,16 @@ global $CFG, $USER, $DB;
 
 // Do the usual Moodle setup
 if (! $cm = get_coursemodule_from_id('adobeconnect', $id)) {
-    print_error('Course Module ID was incorrect');
+    error('Course Module ID was incorrect');
 }
 $cond = array('id' => $cm->course);
 if (! $course = $DB->get_record('course', $cond)) {
-    print_error('Course is misconfigured');
+    error('Course is misconfigured');
 }
 
 $cond = array('id' => $cm->instance);
 if (! $adobeconnect = $DB->get_record('adobeconnect', $cond)) {
-    print_error('Course module is incorrect');
+    error('Course module is incorrect');
 }
 
 require_login($course, true, $cm);
@@ -59,10 +69,26 @@ if (isset($CFG->adobeconnect_https) and (!empty($CFG->adobeconnect_https))) {
     $protocol   = 'https://';
 }
 
-// Create a Connect Pro login session for this user
+// Check if the user's email is the Connect Pro user's login
 $usrobj = new stdClass();
 $usrobj = clone($USER);
-$login  = $usrobj->username = set_username($usrobj->username, $usrobj->email);
+/**** START Auto-Login ****/
+if (isset($CFG->adobeconnect_email_login) and
+!empty($CFG->adobeconnect_email_login)) {
+$usrobj->username = obfuscatedEmail($usrobj->email, $usrobj->id);
+}
+
+$usrobj->password = aconnect_create_user_password($usrobj->email);
+
+if ( $usrobj->username == $settings_ac_admin_login ) {
+  $usrobj->password = $settings_ac_admin_password;
+} 
+
+/***** END Auto-Login ************/
+/*$usrobj->username = set_username($usrobj->username, $usrobj->email);
+
+$usrcanjoin = false;
+*/
 
 $params = array('instanceid' => $cm->instance, 'groupid' => $groupid);
 $sql = "SELECT meetingscoid FROM {adobeconnect_meeting_groups} amg WHERE ".
@@ -74,9 +100,10 @@ $meetscoid = $DB->get_record_sql($sql, $params);
 $aconnect   = aconnect_login();
 $recording  = array();
 $fldid      = aconnect_get_folder($aconnect, 'content');
-$usrcanjoin = false;
-$context = context_module::instance($cm->id);
+//$usrcanjoin = false;
+$context    = context_module::instance(CONTEXT_MODULE, $cm->id);
 $data       = aconnect_get_recordings($aconnect, $fldid, $meetscoid->meetingscoid);
+
 
 /// Set page global
 $url = new moodle_url('/mod/adobeconnect/view.php', array('id' => $cm->id));
@@ -99,10 +126,13 @@ if (!empty($data) && array_key_exists($recscoid, $data)) {
     }
 }
 
-aconnect_logout($aconnect);
+/** deleted**/
+//aconnect_logout($aconnect);
 
 if (empty($recording) and confirm_sesskey()) {
     notify(get_string('errormeeting', 'adobeconnect'));
+/** added **/
+aconnect_logout($aconnect);
     die();
 }
 
@@ -125,7 +155,23 @@ if (NOGROUPS != $cm->groupmode) {
 
 if (!$usrcanjoin) {
     notice(get_string('usergrouprequired', 'adobeconnect'), $url);
+} else {
+    //If a recording is private, it won't allow access to those who aren't participants
+    // i.e. haven't previously joined the meeting.
+    // In that case, create user if necessary and assign lowest required permission to see recording
+    if (!($usrprincipal = aconnect_user_exists($aconnect, $usrobj))) {
+        if (!($usrprincipal = aconnect_create_user($aconnect, $usrobj))) {
+            debugging("error creating user", DEBUG_DEVELOPER);
+        }
+    }
+    if (!aconnect_check_user_perm($aconnect, $usrprincipal, $meetscoid->meetingscoid, ADOBE_HOST) && !aconnect_check_user_perm($aconnect, $usrprincipal, $meetscoid->meetingscoid, ADOBE_PRESENTER)) {
+        if (!aconnect_check_user_perm($aconnect, $usrprincipal, $meetscoid->meetingscoid, ADOBE_PARTICIPANT, true)) {
+          debugging('Error assigning user adobe participant role', DEBUG_DEVELOPER);
+        }
+    }
 }
+
+aconnect_logout($aconnect);
 
 // Trigger an event for viewing a recording.
 $params = array(
@@ -139,15 +185,35 @@ $event->trigger();
 // Include the port number only if it is a port other than 80
 $port = '';
 
-if (!empty($CFG->adobeconnect_port) and (80 != $CFG->adobeconnect_port)) {
-    $port = ':' . $CFG->adobeconnect_port;
+if (!empty($settings_ac_port) and (80 != $settings_ac_port)) {
+    $port = ':' . $settings_ac_port;
 }
 
-$aconnect = new connect_class_dom($CFG->adobeconnect_host, $CFG->adobeconnect_port,
-                                  '', '', '', $https);
+$aconnect = new connect_class_dom($settings_ac_host, $settings_ac_port, '', '', '', $https);
+
+$password = $usrobj->password;
+$login= $usrobj->username;
+
+//$aconnect->request_http_header_login(1, $login);
+
+//============ START Auto-===================>
+if ( $CFG->adobeconnect_login_type == 'httpauth' ) {
 
 $aconnect->request_http_header_login(1, $login);
+} else {
+$aconnect->request_user_login($login, $password);
+$test=check_if_user_logged_in($aconnect);
+
+}
+
+//============ END Auto-Login ===================|
 $adobesession = $aconnect->get_cookie();
 
-redirect($protocol . $CFG->adobeconnect_meethost . $port
-                     . $recording->url . '?session=' . $aconnect->get_cookie());
+$redirlink = $protocol.$settings_ac_meethost.$port.$meeting['url']."?session=".$aconnect->get_cookie();
+
+if(!$test){
+	echo "<script type='text/javascript'>alert('".get_string('couldnoterror','mod_adobeconnect')."');window.location='$redirlink';</script>";
+	exit;
+}
+
+redirect($protocol . $settings_ac_meethost . $port . $recording['url'] . '?session=' . $aconnect->get_cookie());

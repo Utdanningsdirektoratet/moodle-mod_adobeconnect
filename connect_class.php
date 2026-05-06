@@ -32,10 +32,11 @@ class connect_class {
     var $_apicall;
     var $_connection;
     var $_https;
+    var $_curlconnection;
 
     public function __construct($serverurl = '', $serverport = 80,
                                 $username = '', $password = '',
-                                $cookie = '', $https = false) {
+                                $cookie = '', $https = false, $timeout = 0) {
 
         $this->_serverurl = $serverurl;
         $this->_serverport = $serverport;
@@ -43,6 +44,18 @@ class connect_class {
         $this->_password = $password;
         $this->_cookie = $cookie;
         $this->_https = $https;
+        $this->_curlconnection = curl_init();
+
+        if(!empty($timeout)) {
+          curl_setopt($this->_curlconnection, CURLOPT_TIMEOUT_MS, intval($timeout));
+        }
+
+    }
+
+    public function __destruct() {
+      if(!empty($this->_curlconnection)) {
+        curl_close($this->_curlconnection);
+      }
     }
 
     /**
@@ -140,7 +153,7 @@ class connect_class {
     public function send_request($return_header = 0, $add_header = array(), $stop = false) {
         global $CFG;
 
-        $ch = curl_init();
+        $ch = $this->_curlconnection;
 
         $serverurl = $this->_serverurl;
 
@@ -178,7 +191,13 @@ class connect_class {
        }
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $this->_xmlrequest);
+
+        if (strpos($this->_xmlrequest,'principal-update')) {
+		    curl_setopt($ch, CURLOPT_POSTFIELDS, urldecode($this->_xmlrequest));
+	      } else {
+		  curl_setopt($ch, CURLOPT_POSTFIELDS, $this->_xmlrequest);
+	      }
+
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
 
@@ -193,8 +212,6 @@ class connect_class {
         curl_setopt($ch, CURLOPT_HEADER, $return_header);
 
         $result = curl_exec($ch);
-
-        curl_close($ch);
 
         return $result;
     }

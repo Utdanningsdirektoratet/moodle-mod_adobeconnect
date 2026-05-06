@@ -41,7 +41,7 @@ require_once('locallib.php');
 $adobeconnect_EXAMPLE_CONSTANT = 42;
 
 /** Include eventslib.php */
-require_once($CFG->libdir.'/eventslib.php');
+require_once($CFG->libdir.'/deprecatedlib.php');
 /** Include calendar/lib.php */
 require_once($CFG->dirroot.'/calendar/lib.php');
 
@@ -474,7 +474,12 @@ function adobeconnect_delete_instance($id) {
                 $event->delete();
             }
 
-            aconnect_remove_meeting($aconnect, $meeting->meetingscoid);
+            // Setting for admins if they wants to autodelete rooms in Adobe when deleted in Moodle
+            $settings_autodelete_rooms =  get_config('adobeconnect', 'adobeconnect_autodelete_rooms');
+
+            if ($settings_autodelete_rooms) {
+                aconnect_remove_meeting($aconnect, $meeting->meetingscoid);
+            }
         }
 
         aconnect_logout($aconnect);
