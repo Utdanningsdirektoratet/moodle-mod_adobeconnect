@@ -341,9 +341,15 @@ function aconnect_get_folder_sco_id($xml, $folder) {
 function aconnect_login() {
     global $CFG, $USER, $COURSE;
 
-    if (!isset($CFG->adobeconnect_host) or
-        !isset($CFG->adobeconnect_admin_login) or
-        !isset($CFG->adobeconnect_admin_password)) {
+    // Adobeconnect Admin settings
+    $settings_ac_host =  get_config('adobeconnect', 'adobeconnect_host');
+    $settings_ac_port =  get_config('adobeconnect', 'adobeconnect_port');
+    $settings_ac_admin_login =  get_config('adobeconnect', 'adobeconnect_admin_login');
+    $settings_ac_admin_password =  get_config('adobeconnect', 'adobeconnect_admin_password');
+
+    if (!isset($settings_ac_host) or
+        !isset($settings_ac_admin_login) or
+        !isset($settings_ac_admin_password)) {
             if (is_siteadmin($USER->id)) {
                 notice(get_string('adminnotsetupproperty', 'adobeconnect'),
                        $CFG->wwwroot . '/admin/settings.php?section=modsettingadobeconnect');
@@ -353,10 +359,10 @@ function aconnect_login() {
             }
     }
 
-    if (isset($CFG->adobeconnect_port) and
-        !empty($CFG->adobeconnect_port) and
-        ((80 != $CFG->adobeconnect_port) and (0 != $CFG->adobeconnect_port))) {
-        $port = $CFG->adobeconnect_port;
+    if (isset($settings_ac_port) and
+        !empty($settings_ac_port) and
+        ((80 != $settings_ac_port) and (0 != $settings_ac_port))) {
+        $port = $settings_ac_port;
     } else {
         $port = 80;
     }
@@ -368,10 +374,10 @@ function aconnect_login() {
     }
 
 
-    $aconnect = new connect_class_dom($CFG->adobeconnect_host,
-                                      $CFG->adobeconnect_port,
-                                      $CFG->adobeconnect_admin_login,
-                                      $CFG->adobeconnect_admin_password,
+    $aconnect = new connect_class_dom($settings_ac_host,
+                                      $settings_ac_port,
+                                      $settings_ac_admin_login,
+                                      $settings_ac_admin_password,
                                       '',
                                       $https,
                                       $CFG->adobeconnect_timeout);
@@ -1489,7 +1495,10 @@ function get_connect_username($userid) {
  */
 function aconnect_create_user_password($inputString) {
   global $CFG, $USER, $DB;
-  $key=$CFG->adobeconnectkey;
+  // Adobeconnect Admin settings
+  $settings_ac_key =  get_config('adobeconnect', 'adobeconnect_key');
+
+  $key = $settings_ac_key;
   $cryptor = new Cryptor('aes-256-ctr', 'sha256', Cryptor::FORMAT_B64);
   
   $params = (object)[
@@ -1523,8 +1532,11 @@ function aconnect_create_user_password($inputString) {
  * @return returns true on success DB connection failures may result in exceptions thrown
  */
 function rewrite_user_password($acname, $newpass, $bool=0){
-	global $CFG, $USER, $DB;
-  $key = $CFG->adobeconnectkey;
+  global $CFG, $USER, $DB;
+  // Adobeconnect Admin settings
+  $settings_ac_key =  get_config('adobeconnect', 'adobeconnect_key');
+
+  $key = $settings_ac_key;
   $cryptor = new Cryptor('aes-256-ctr', 'sha256', Cryptor::FORMAT_B64);
 	if($record_exists = $DB->get_record('acusers', array('acuser'=>$acname))){
     $record_exists->password = $cryptor->encryptString($newpass, $key);
@@ -1559,7 +1571,12 @@ function generate_seed(){
  * @return true on success
  * */
 function init_password_reset(){
-	global $USER, $CFG;
+  global $USER, $CFG;
+  // Adobeconnect Admin settings
+  $settings_ac_host =  get_config('adobeconnect', 'adobeconnect_host');
+  $settings_ac_port =  get_config('adobeconnect', 'adobeconnect_port');
+  $settings_ac_admin_login =  get_config('adobeconnect', 'adobeconnect_admin_login');
+  $settings_ac_admin_password =  get_config('adobeconnect', 'adobeconnect_admin_password');
 
     $usrdata = (object)[
         'username' => null
@@ -1570,8 +1587,8 @@ function init_password_reset(){
 	if (isset($CFG->adobeconnect_email_login) and !empty($CFG->adobeconnect_email_login)) {
 		$acuser = $USER->email;
 	}
-    $aconnect = new connect_class_dom($CFG->adobeconnect_host, $CFG->adobeconnect_port,'', '', '', $CFG->adobeconnect_https,$CFG->adobeconnect_timeout);
-    $aconnect->request_user_login($CFG->adobeconnect_admin_login, $CFG->adobeconnect_admin_password);
+    $aconnect = new connect_class_dom($settings_ac_host, $settings_ac_port,'', '', '', $CFG->adobeconnect_https,$CFG->adobeconnect_timeout);
+    $aconnect->request_user_login($settings_ac_admin_login, $settings_ac_admin_password);
 	$usrdata->username=$acuser;
 	$principal_id = aconnect_user_exists($aconnect, $usrdata);
 
@@ -1652,8 +1669,11 @@ function check_if_user_logged_in($aconnect){
  * @return string(the user password) or false
  */
 function check_if_userset_pw($acname){
-	global $CFG, $DB;
-	$key = $CFG->adobeconnectkey;
+  global $CFG, $DB;
+  // Adobeconnect Admin settings
+  $settings_ac_key =  get_config('adobeconnect');
+
+	$key = $settings_ac_key;
 	if($record_exists = $DB->get_record('acusers', array('acuser'=>$acname))){
 		if($record_exists->userset){
       $cryptor = new Cryptor('aes-256-ctr', 'sha256', Cryptor::FORMAT_B64);

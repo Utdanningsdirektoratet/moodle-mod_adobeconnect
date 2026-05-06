@@ -474,9 +474,12 @@ function adobeconnect_delete_instance($id) {
                 $event->delete();
             }
 
-            // DIGILÆR: We don't want to automatically delete rooms from the Adobe server when they're deleted
-            // in Moodle.
-            // aconnect_remove_meeting($aconnect, $meeting->meetingscoid);
+            // Setting for admins if they wants to autodelete rooms in Adobe when deleted in Moodle
+            $settings_autodelete_rooms =  get_config('adobeconnect', 'adobeconnect_autodelete_rooms');
+
+            if ($settings_autodelete_rooms) {
+                aconnect_remove_meeting($aconnect, $meeting->meetingscoid);
+            }
         }
 
         aconnect_logout($aconnect);

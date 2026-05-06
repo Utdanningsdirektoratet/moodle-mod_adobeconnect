@@ -26,6 +26,15 @@ require_once(dirname(__FILE__).'/locallib.php');
 require_once(dirname(__FILE__).'/connect_class.php');
 require_once(dirname(__FILE__).'/connect_class_dom.php');
 
+// Adobeconnect Admin settings
+$settings_ac_host =  get_config('adobeconnect', 'adobeconnect_host');
+$settings_ac_meethost =  get_config('adobeconnect', 'adobeconnect_meethost');
+$settings_ac_port =  get_config('adobeconnect', 'adobeconnect_port');
+$settings_ac_admin_login =  get_config('adobeconnect', 'adobeconnect_admin_login');
+$settings_ac_admin_password =  get_config('adobeconnect', 'adobeconnect_admin_password');
+$settings_ac_key =  get_config('adobeconnect', 'adobeconnect_key');
+$settings_ac_hostgroupid = get_config('adobeconnect', 'adobeconnect_hostgroupid');
+
 $id       = required_param('id', PARAM_INT); // course_module ID, or
 $groupid  = required_param('groupid', PARAM_INT);
 $sesskey  = required_param('sesskey', PARAM_ALPHANUM);
@@ -58,8 +67,8 @@ if (isset($CFG->adobeconnect_email_login) and
 }
 
 $usrobj->password = aconnect_create_user_password($usrobj->email);
-if ( $usrobj->username == $CFG->adobeconnect_admin_login ) {
-  $usrobj->password = $CFG->adobeconnect_admin_password;
+if ( $usrobj->username == $settings_ac_admin_login ) {
+  $usrobj->password = $settings_ac_admin_password;
 }
 $password=$usrobj->password;
 //$usrobj->username = set_username($usrobj->username, $usrobj->email);
@@ -148,10 +157,10 @@ if ($usrcanjoin and confirm_sesskey($sesskey)) {
                     $https = true;
                 }
 
-                $aconnect = new connect_class_dom($CFG->adobeconnect_host, $CFG->adobeconnect_port, $CFG->adobeconnect_admin_login, $CFG->adobeconnect_admin_password, '', $https, $CFG->adobeconnect_timeout);
+                $aconnect = new connect_class_dom($settings_ac_host, $settings_ac_port, $settings_ac_admin_login, $settings_ac_admin_password, '', $https, $CFG->adobeconnect_timeout);
                 
-                $aconnect->request_user_login($CFG->adobeconnect_admin_login, $CFG->adobeconnect_admin_password);
-                $aconnect->changeRole($CFG->adobeconnect_hostgroupid, $usrprincipal);
+                $aconnect->request_user_login($settings_ac_admin_login, $settings_ac_admin_password);
+                $aconnect->changeRole($settings_ac_hostgroupid, $usrprincipal);
             } else {
                 //DEBUG
                 print_object('error assign user adobe host role');
@@ -214,7 +223,7 @@ if ($usrcanjoin and confirm_sesskey($sesskey)) {
             $protocol = 'https://';
             $https = true;
         }
-        $aconnect = new connect_class_dom($CFG->adobeconnect_host, $CFG->adobeconnect_port,'', '', '', $https);
+        $aconnect = new connect_class_dom($settings_ac_host, $settings_ac_port, '', '', '', $https);
         if ( $CFG->adobeconnect_login_type == 'httpauth' ) {
           $aconnect->request_http_header_login(1, $login);
         } else {
@@ -230,8 +239,8 @@ if ($usrcanjoin and confirm_sesskey($sesskey)) {
         // Include the port number only if it is a port other than 80
         $port = '';
 
-        if (!empty($CFG->adobeconnect_port) and (80 != $CFG->adobeconnect_port)) {
-            $port = ':' . $CFG->adobeconnect_port;
+        if (!empty($settings_ac_port) and (80 != $settings_ac_port)) {
+            $port = ':' . $settings_ac_port;
         }
 
         // Trigger an event for joining a meeting.
@@ -242,7 +251,7 @@ if ($usrcanjoin and confirm_sesskey($sesskey)) {
         );
         $event = \mod_adobeconnect\event\adobeconnect_join_meeting::create($params);
         $event->trigger();
-		$redirlink = $protocol.$CFG->adobeconnect_meethost.$port.$meeting->url."?session=".$aconnect->get_cookie();
+		$redirlink = $protocol.$settings_ac_meethost.$port.$meeting->url."?session=".$aconnect->get_cookie();
 
 		if(!$test){
 			echo "<script type='text/javascript'>alert('".get_string('couldnoterror','mod_adobeconnect')."');window.location='$redirlink';</script>";
@@ -251,7 +260,7 @@ if ($usrcanjoin and confirm_sesskey($sesskey)) {
 
         aconnect_update_time_last_visited($cm->instance);
 
-        redirect($protocol . $CFG->adobeconnect_meethost . $port
+        redirect($protocol . $settings_ac_meethost . $port
                  . $meeting->url
                  . '?session=' . $aconnect->get_cookie());
     }

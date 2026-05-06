@@ -14,6 +14,13 @@ require_once(dirname(__FILE__).'/locallib.php');
 require_once(dirname(__FILE__).'/connect_class.php');
 require_once(dirname(__FILE__).'/connect_class_dom.php');
 
+// Adobeconnect Admin settings
+$settings_ac_host =  get_config('adobeconnect', 'adobeconnect_host');
+$settings_ac_meethost =  get_config('adobeconnect', 'adobeconnect_meethost');
+$settings_ac_port =  get_config('adobeconnect', 'adobeconnect_port');
+$settings_ac_admin_login =  get_config('adobeconnect', 'adobeconnect_admin_login');
+$settings_ac_admin_password =  get_config('adobeconnect', 'adobeconnect_admin_password');
+
 $id         = required_param('id', PARAM_INT);
 $groupid    = required_param('groupid', PARAM_INT);
 $recscoid   = required_param('recording', PARAM_INT);
@@ -58,8 +65,8 @@ $usrobj->username = obfuscatedEmail($usrobj->email, $usrobj->id);
 
 $usrobj->password = aconnect_create_user_password($usrobj->email);
 
-if ( $usrobj->username == $CFG->adobeconnect_admin_login ) {
-$usrobj->password = $CFG->adobeconnect_admin_password;
+if ( $usrobj->username == $settings_ac_admin_login ) {
+  $usrobj->password = $settings_ac_admin_password;
 } 
 
 /***** END Auto-Login ************/
@@ -163,13 +170,11 @@ $event->trigger();
 // Include the port number only if it is a port other than 80
 $port = '';
 
-if (!empty($CFG->adobeconnect_port) and (80 != $CFG->adobeconnect_port)) {
-    $port = ':' . $CFG->adobeconnect_port;
+if (!empty($settings_ac_port) and (80 != $settings_ac_port)) {
+    $port = ':' . $settings_ac_port;
 }
 
-$aconnect = new connect_class_dom($CFG->adobeconnect_host, $CFG->adobeconnect_port,
-                                  '', '', '', $https);
-
+$aconnect = new connect_class_dom($settings_ac_host, $settings_ac_port, '', '', '', $https);
 
 $password = $usrobj->password;
 $login= $usrobj->username;
@@ -189,11 +194,11 @@ $test=check_if_user_logged_in($aconnect);
 //============ END Auto-Login ===================|
 $adobesession = $aconnect->get_cookie();
 
-$redirlink = $protocol.$CFG->adobeconnect_meethost.$port.$meeting['url']."?session=".$aconnect->get_cookie();
+$redirlink = $protocol.$settings_ac_meethost.$port.$meeting['url']."?session=".$aconnect->get_cookie();
 
 if(!$test){
 	echo "<script type='text/javascript'>alert('".get_string('couldnoterror','mod_adobeconnect')."');window.location='$redirlink';</script>";
 	exit;
 }
 
-redirect($protocol . $CFG->adobeconnect_meethost . $port . $recording['url'] . '?session=' . $aconnect->get_cookie());
+redirect($protocol . $settings_ac_meethost . $port . $recording['url'] . '?session=' . $aconnect->get_cookie());

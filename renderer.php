@@ -241,12 +241,15 @@ class mod_adobeconnect_renderer extends plugin_renderer_base {
     function display_meeting_recording($recordings, $cmid, $groupid, $sourcescoid) {
         global $CFG, $USER;
 
+        // Adobeconnect Admin settings
+        $settings_ac_port =  get_config('adobeconnect', 'adobeconnect_port');
+
         $html       = '';
         $protocol   = 'http://';
         $port       = ''; // Include the port number only if it is a port other than 80
 
-        if (!empty($CFG->adobeconnect_port) and (80 != $CFG->adobeconnect_port)) {
-            $port = ':' . $CFG->adobeconnect_port;
+        if (!empty($settings_ac_port) and (80 != $settings_ac_port)) {
+            $port = ':' . $settings_ac_port;
         }
 
         if (isset($CFG->adobeconnect_https) and (!empty($CFG->adobeconnect_https))) {

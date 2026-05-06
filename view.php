@@ -31,6 +31,13 @@ $id = optional_param('id', 0, PARAM_INT); // course_module ID, or
 $a  = optional_param('a', 0, PARAM_INT);  // adobeconnect instance ID
 $groupid = optional_param('group', 0, PARAM_INT);
 
+// Adobeconnect Admin settings
+$settings_ac_host =  get_config('adobeconnect', 'adobeconnect_host');
+$settings_ac_meethost =  get_config('adobeconnect', 'adobeconnect_meethost');
+$settings_ac_port =  get_config('adobeconnect', 'adobeconnect_port');
+$settings_ac_admin_login =  get_config('adobeconnect', 'adobeconnect_admin_login');
+$settings_ac_admin_password =  get_config('adobeconnect', 'adobeconnect_admin_password');
+
 global $CFG, $USER, $DB, $PAGE, $OUTPUT, $SESSION;
 
 if ($id) {
@@ -95,13 +102,12 @@ $usrobj = new stdClass();
 $usrobj = clone($USER);
 
 //============ START Auto-Login ===================>
-if (isset($CFG->adobeconnect_email_login) and
-!empty($CFG->adobeconnect_email_login)) {
-$usrobj->username = obfuscatedEmail($usrobj->email, $usrobj->id);
+if (isset($CFG->adobeconnect_email_login) and !empty($CFG->adobeconnect_email_login)) {
+  $usrobj->username = obfuscatedEmail($usrobj->email, $usrobj->id);
 }
 $usrobj->password = aconnect_create_user_password($usrobj->email);
-if ( $usrobj->username == $CFG->adobeconnect_admin_login ) {
-$usrobj->password = $CFG->adobeconnect_admin_password;
+if ( $usrobj->username == $settings_ac_admin_login ) {
+  $usrobj->password = $settings_ac_admin_password;
 } 
 //============ ENDE Auto-Login ===================|
 
@@ -254,7 +260,7 @@ if (isset($CFG->adobeconnect_https) and (!empty($CFG->adobeconnect_https))) {
     $https = true;
 }
 
-$aconnect = new connect_class_dom($CFG->adobeconnect_host, $CFG->adobeconnect_port,
+$aconnect = new connect_class_dom($settings_ac_host, $settings_ac_port,
                                   '', '', '', $https);
 
 $aconnect->request_http_header_login(1, $login);*/
@@ -262,8 +268,8 @@ $aconnect->request_http_header_login(1, $login);*/
 // Log in the current user
 $login = $usrobj->username;
 $password = $usrobj->password;
-if ( $login == $CFG->adobeconnect_admin_login ) {
-$password = $CFG->adobeconnect_admin_password;
+if ( $login == $settings_ac_admin_login ) {
+  $password = $settings_ac_admin_password;
 }
 $https = false;
 
@@ -272,14 +278,12 @@ $https = true;
 }
 
 if(!$aconnect) {
-$aconnect = new connect_class_dom($CFG->adobeconnect_host,
-$CFG->adobeconnect_port,
-'', '', '', $https,$CFG->adobeconnect_timeout);
-if ( $CFG->adobeconnect_login_type == 'httpauth' ) {
-$aconnect->request_http_header_login(1, $login);
-} else {
-$aconnect->request_user_login($login, $password);
-}
+  $aconnect = new connect_class_dom($settings_ac_host, $settings_ac_port, '', '', '', $https,$CFG->adobeconnect_timeout);
+  if ( $CFG->adobeconnect_login_type == 'httpauth' ) {
+    $aconnect->request_http_header_login(1, $login);
+  } else {
+    $aconnect->request_user_login($login, $password);
+  }
 }
 //============ ENDE Auto-Login ===================|
 $adobesession = $aconnect->get_cookie();
@@ -381,8 +385,8 @@ if (has_capability('mod/adobeconnect:meetingpresenter', $context) or
     // Include the port number only if it is a port other than 80
     $port = '';
 
-    if (!empty($CFG->adobeconnect_port) and (80 != $CFG->adobeconnect_port)) {
-        $port = ':' . $CFG->adobeconnect_port;
+    if (!empty($settings_ac_port) and (80 != $settings_ac_port)) {
+        $port = ':' . $settings_ac_port;
     }
 
     $protocol = 'http://';
@@ -391,14 +395,12 @@ if (has_capability('mod/adobeconnect:meetingpresenter', $context) or
         $protocol = 'https://';
     }
 
-    $url = $protocol . $CFG->adobeconnect_meethost . $port
-           . $meeting->url;
+    $url = $protocol . $settings_ac_meethost . $port . $meeting->url;
 
     $meetingdetail->url = $url;
 
 
-    $url = $protocol.$CFG->adobeconnect_meethost.$port.'/admin/meeting/sco/info?principal-id='.
-           $usrprincipal.'&amp;sco-id='.$scoid.'&amp;session='.$adobesession;
+    $url = $protocol.$settings_ac_meethost.$port.'/admin/meeting/sco/info?principal-id='. $usrprincipal.'&amp;sco-id='.$scoid.'&amp;session='.$adobesession;
 
     // Get the server meeting details link
     $meetingdetail->servermeetinginfo = $url;

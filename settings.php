@@ -200,10 +200,66 @@ if ($ADMIN->fulltree) {
                        //============ END Auto-Login ===================|
 
     $settings->add(new admin_setting_configtext(
+        'adobeconnect/adobeconnect_host',
+        get_string('admin_host', 'adobeconnect'),
+        get_string('admin_host_desc', 'adobeconnect'),
+        'example.adobeconnect.com/api/xml',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'adobeconnect/adobeconnect_meethost',
+        get_string('admin_meethost', 'adobeconnect'),
+        get_string('admin_meethost_desc', 'adobeconnect'),
+        'example.adobeconnect.com',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'adobeconnect/adobeconnect_port',
+        get_string('admin_port', 'adobeconnect'),
+        get_string('admin_port', 'adobeconnect'),
+        '443',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'adobeconnect/adobeconnect_admin_login',
+        get_string('admin_login', 'adobeconnect'),
+        get_string('admin_login_desc', 'adobeconnect'),
+        'user@example.org',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configpasswordunmask(
+        'adobeconnect/adobeconnect_admin_password',
+        get_string('admin_password', 'adobeconnect'),
+        get_string('admin_password_desc', 'adobeconnect'),
+        'abc123',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configpasswordunmask(
+        'adobeconnect/adobeconnect_key',
+        get_string('admin_key', 'adobeconnect'),
+        get_string('admin_key_desc', 'adobeconnect'),
+        'def456',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'adobeconnect/adobeconnect_hostgroupid',
+        get_string('admin_hostgroupid', 'adobeconnect'),
+        get_string('admin_hostgroupid_desc', 'adobeconnect'),
+        '12345678910',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configtext(
         'adobeconnect/adobeconnect_obfuscated_email',
         get_string('admin_obfuscated_email', 'adobeconnect'),
         get_string('admin_obfuscated_email_desc', 'adobeconnect'),
-        'digilaer.no',
+        'adobeconnect.example.org',
         PARAM_TEXT
     ));
                     
@@ -219,6 +275,7 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configcheckbox('adobeconn_expose_pass', get_string('exposetoall', 'adobeconnect'),
                        get_string('exposetoall_desc', 'adobeconnect'), '0'));
 
+    $settings->add(new admin_setting_configcheckbox('adobeconnect/adobeconnect_autodelete_rooms', get_string('autodelete_rooms', 'adobeconnect'), get_string('autodelete_rooms_desc', 'adobeconnect'), '1'));
 
     $url = $CFG->wwwroot . '/mod/adobeconnect/conntest.php';
     $url = htmlentities($url, ENT_COMPAT, 'UTF-8');
@@ -234,4 +291,3 @@ if ($ADMIN->fulltree) {
 
     $settings->add(new admin_setting_heading('adobeconnect_intro', '', get_string('settingblurb', 'adobeconnect', $param)));
 }
-
