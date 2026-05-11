@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.5.10.1 
+
+- Rename plugin to moodle-mod_adobeconnect_maintained
+- Add licenses to our files
+
 ## 4.5.10.0 (2026-05-06)
 
 - Added setting for autdeletion of rooms in Adobe
