@@ -81,7 +81,7 @@ function adobeconnect_supports($feature) {
  * @param object $adobeconnect An object from the form in mod_form.php
  * @return int The id of the newly inserted adobeconnect record
  */
-function adobeconnect_add_instance($adobeconnect) {
+function adobeconnect_maintained_add_instance($adobeconnect) {
     global $COURSE, $USER, $DB;
 
     $adobeconnect->timecreated  = time();
@@ -271,7 +271,7 @@ function adobeconnect_add_instance($adobeconnect) {
  * @param object $adobeconnect An object from the form in mod_form.php
  * @return boolean Success/Fail
  */
-function adobeconnect_update_instance($adobeconnect) {
+function adobeconnect_maintained_update_instance($adobeconnect) {
     global $DB, $USER;
 
     $adobeconnect->timemodified = time();
